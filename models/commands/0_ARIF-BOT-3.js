@@ -1,32 +1,28 @@
 const axios = require("axios");
 
 module.exports.config = {
-  name: "arif",
-  version: "1.0.7",
+  name: "arman",
+  version: "2.0.0",
   hasPermssion: 0,
   credits: "ARIF BABU",
   description: "Gemini Flash 2.0 AI (No Prefix)",
   commandCategory: "ai",
   usages: "arman [question]",
-  cooldowns: 5
+  cooldowns: 3,
+  usePrefix: false // 🔥 IMPORTANT
 };
 
-module.exports.handleEvent = async function ({ api, event }) {
+module.exports.run = async function ({ api, event }) {
   try {
     if (!event.body) return;
 
     const body = event.body.trim();
-    const lower = body.toLowerCase();
+    if (!body.toLowerCase().startsWith("arman")) return;
 
-    // 🔥 no-prefix trigger
-    if (!lower.startsWith("arman")) return;
-
-    // "arif" ke baad ka text
     let question = body.slice(5).trim();
 
-    // agar sirf "arman" likha ho
     if (!question) {
-      question = "Ek pyari si shayari ya joke suna do";
+      question = "Ek pyari si shayari suna do";
     }
 
     const res = await axios.post(
@@ -41,35 +37,27 @@ module.exports.handleEvent = async function ({ api, event }) {
       {
         headers: {
           "Content-Type": "application/json",
-          // 🔑 YAHAN APNI REAL API KEY LAGAO
-          "x-goog-api-key": "AIzaSyBH15lctcz6iQFiCRV9uC8TEBtflY--ey0"
+          "x-goog-api-key": "AIzaSyBH15lctcz6iQFiCRV9uC8TEBtflY--ey0" // 🔑 REAL KEY
         }
       }
     );
 
     let reply = "❌ Gemini se reply nahi mila.";
 
-    if (res.data?.candidates?.length > 0) {
+    if (res.data?.candidates?.[0]?.content?.parts) {
       reply = res.data.candidates[0].content.parts
         .map(p => p.text)
         .join("\n");
     }
 
-    return api.sendMessage(
-      reply,
-      event.threadID,
-      event.messageID
-    );
+    return api.sendMessage(reply, event.threadID, event.messageID);
 
   } catch (err) {
-    console.error("Gemini Flash Error:", err.response?.data || err.message);
+    console.error("Gemini Error:", err.response?.data || err.message);
     return api.sendMessage(
-      "❌ Arman thoda busy hai, baad me try karo.",
+      "❌ Arman abhi available nahi hai.",
       event.threadID,
       event.messageID
     );
   }
 };
-
-// prefix command disable
-module.exports.run = () => {};
