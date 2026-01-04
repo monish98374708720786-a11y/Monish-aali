@@ -1,27 +1,39 @@
 module.exports.config = {
-	name: "uns",
-	version: "1.0.1",
-	hasPermssion: 0,
-	credits: "Mirai Team",
-	description: "unsend message",
-	commandCategory: "system",
-	usages: "unsend",
-	cooldowns: 0
+  name: "uns",
+  version: "1.0.0",
+  hasPermssion: 0,
+  credits: "ARIF BABU",
+  description: "Detect message unsend (prefix + no prefix)",
+  usePrefix: false,
+  commandCategory: "group",
+  cooldowns: 0
 };
 
-module.exports.languages = {
-	"vi": {
-		"returnCant": "Không thể gỡ tin nhắn của người khác.",
-		"missingReply": "Hãy reply tin nhắn cần gỡ."
-	},
-	"en": {
-		"returnCant": "Can't to unsend message from other user.",
-		"missingReply": "Reply to the message you want to unsend."
-	}
-}
+// ===== UNSEND DETECTION =====
+module.exports.handleEvent = async function ({ api, event }) {
+  if (event.type !== "message_unsend") return;
 
-module.exports.run = function({ api, event, getText }) {
-	if (event.messageReply.senderID != api.getCurrentUserID()) return api.sendMessage(getText("returnCant"), event.threadID, event.messageID);
-	if (event.type != "message_reply") return api.sendMessage(getText("missingReply"), event.threadID, event.messageID);
-	return api.unsendMessage(event.messageReply.messageID);
-}
+  try {
+    const threadID = event.threadID;
+    const senderID = event.senderID;
+
+    // user info
+    const userInfo = await api.getUserInfo(senderID);
+    const name = userInfo[senderID]?.name || "Unknown User";
+
+    api.sendMessage(
+      `🗑️ MESSAGE UNSEND DETECTED\n\n👤 Name: ${name}\n🆔 UID: ${senderID}\n\n⚠️ Message delete kar diya gaya.`,
+      threadID
+    );
+  } catch (e) {
+    console.log("Unsend Error:", e);
+  }
+};
+
+// ===== PREFIX COMMAND (OPTIONAL) =====
+module.exports.run = async function ({ api, event }) {
+  api.sendMessage(
+    "✅ Unsend system already active.\n\n🔍 Prefix / no-prefix dono mein kaam karta hai.\n🔒 By ARIF BABU",
+    event.threadID
+  );
+};
