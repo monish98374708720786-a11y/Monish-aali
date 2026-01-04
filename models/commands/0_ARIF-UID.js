@@ -1,57 +1,55 @@
 module.exports.config = {
-  name: "out",
-  version: "1.0.0",
-  hasPermssion: 2, // Admin / Owner only
+  name: "uid",
+  version: "1.2.0",
+  hasPermssion: 0,
   credits: "ARIF BABU",
-  description: "Bot leave from group (prefix & no-prefix)",
-  usePrefix: true,
-  commandCategory: "admin",
-  usages: "out",
-  cooldowns: 3
+  description: "Get User ID (self / mention / reply)",
+  commandCategory: "Tools",
+  cooldowns: 5
 };
 
-module.exports.run = async function ({ api, event, args }) {
-  if (event.threadID == event.senderID) {
-    return api.sendMessage(
-      "❌ Ye command sirf group me kaam karta hai.",
-      event.threadID
-    );
-  }
-
-  return api.sendMessage(
-    "👋 Bye Bye!\nBot group chhod raha hai...",
-    event.threadID,
-    () => api.removeUserFromGroup(api.getCurrentUserID(), event.threadID)
-  );
-};
-
-/* -------- NO PREFIX SUPPORT -------- */
-module.exports.handleEvent = async function ({ api, event }) {
-  if (!event.body) return;
-
-  const msg = event.body.toLowerCase().trim();
-
-  if (msg === "out") {
-    // Sirf group me
-    if (event.threadID == event.senderID) return;
-
-    // Sender admin hai ya nahi
-    const threadInfo = await api.getThreadInfo(event.threadID);
-    const isAdmin = threadInfo.adminIDs.some(
-      item => item.id == event.senderID
-    );
-
-    if (!isAdmin) {
-      return api.sendMessage(
-        "❌ Sirf group admin hi bot ko out kar sakta hai.",
-        event.threadID
-      );
-    }
-
-    return api.sendMessage(
-      "👋 Bye Bye!\nBot group chhod raha hai...",
+// 🔒 CREATOR NAME LOCK
+function checkCredits(api, event) {
+  if (module.exports.config.credits !== "ARIF BABU") {
+    api.sendMessage(
+      "❌ This command is locked.\nCreator: ARIF BABU",
       event.threadID,
-      () => api.removeUserFromGroup(api.getCurrentUserID(), event.threadID)
+      event.messageID
+    );
+    return false;
+  }
+  return true;
+}
+
+module.exports.run = function ({ api, event }) {
+
+  // 🔐 CREDIT CHECK
+  if (!checkCredits(api, event)) return;
+
+  // ============ 1️⃣ REPLY ============
+  if (event.messageReply && event.messageReply.senderID) {
+    return api.sendMessage(
+      `📌 𝗬𝗢𝗨𝗥 𝗨𝗜𝗗:\n${event.messageReply.senderID} ❤️`,
+      event.threadID,
+      event.messageID
     );
   }
+
+  // ============ 2️⃣ MENTION ============
+  const mentions = Object.keys(event.mentions);
+  if (mentions.length > 0) {
+    let msg = "";
+    for (let i = 0; i < mentions.length; i++) {
+      const name = event.mentions[mentions[i]].replace("@", "");
+      msg += `📌 ${name} 𝗨𝗦𝗘𝗥 𝗨𝗜𝗗:\n${mentions[i]} ❤️\n\n`;
+    }
+    return api.sendMessage(msg.trim(), event.threadID, event.messageID);
+  }
+
+  // ============ 3️⃣ SELF UID ============
+  return api.sendMessage(
+    `📌 𝗨𝗦𝗘𝗥 𝗨𝗜𝗗:\n${event.senderID} ❤️`,
+    event.threadID,
+    event.messageID
+  );
 };
